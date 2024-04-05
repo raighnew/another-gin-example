@@ -1,18 +1,19 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
-	"encoding/json"
-	"flag"
-	"fmt"
-
 	v1 "course-sign-up/api/v1"
 	"course-sign-up/internal/handler"
-	"course-sign-up/internal/middleware"
+	"course-sign-up/internal/model"
 	"course-sign-up/pkg/config"
 	"course-sign-up/pkg/log"
+	mock_service "course-sign-up/test/mocks/service"
+	"encoding/json"
 
+	"flag"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -23,6 +24,7 @@ import (
 
 var logger *log.Logger
 var router *gin.Engine
+var hdl *handler.Handler
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
@@ -39,11 +41,6 @@ func TestMain(m *testing.M) {
 
 	gin.SetMode(gin.TestMode)
 	router = gin.Default()
-	router.Use(
-		middleware.ResponseLogMiddleware(logger),
-		middleware.RequestLogMiddleware(logger),
-		//middleware.SignMiddleware(log),
-	)
 
 	code := m.Run()
 	fmt.Println("test end")
@@ -51,25 +48,52 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestUserHandler_Register(t *testing.T) {
+func TestCourseHandler_List(t *testing.T) {
 	ctrl := gomock.NewController(t)
+
 	defer ctrl.Finish()
 
-	params := v1.RegisterRequest{
-		Password: "123456",
-		Email:    "xxx@gmail.com",
+	courseService := mock_service.NewMockCourseService(ctrl)
+	courseService.EXPECT().ListCourses(gomock.Any()).Return(nil, nil)
+
+	coursesHandler := handler.NewCourseHandler(hdl, courseService)
+
+	router.GET("/courses", coursesHandler.ListCourses)
+
+	req, _ := http.NewRequest("GET", "/courses", nil)
+
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, resp.Code, http.StatusOK)
+}
+
+func TestCourseHandler_SignUp(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	defer ctrl.Finish()
+
+	params := v1.SignUpRequest{
+		CourseID: "CS101",
 	}
 
-	mockUserService := mock_service.NewMockUserService(ctrl)
-	mockUserService.EXPECT().Register(gomock.Any(), &params).Return(nil)
+	courseService := mock_service.NewMockCourseService(ctrl)
+	courseService.EXPECT().IfCourseExists(gomock.Any(), "CS101").Return(true, nil)
+	courseService.EXPECT().SignUpCourse(gomock.Any(), gomock.Any(), "CS101").Return(&model.Enrollment{
+		StudentID: "test@mail.com",
+		CourseID:  "CS101",
+	}, nil)
 
-	userHandler := handler.NewUserHandler(hdl, mockUserService)
-	router.POST("/register", userHandler.Register)
+	coursesHandler := handler.NewCourseHandler(hdl, courseService)
+
+	router.POST("/students/:studentEmail/courses", coursesHandler.SignUpCourse)
 
 	paramsJson, _ := json.Marshal(params)
 
-	resp := performRequest(router, "POST", "/register", bytes.NewBuffer(paramsJson))
+	req, _ := http.NewRequest("POST", "/students/test@mail.com/courses", bytes.NewBuffer(paramsJson))
 
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
 	assert.Equal(t, resp.Code, http.StatusOK)
-	// Add assertions for the response body if needed
 }
