@@ -21,6 +21,7 @@ var RepositorySet = wire.NewSet(
 	repository.NewDb,
 	repository.NewRepository,
 	repository.NewCourseRepository,
+	repository.NewEnrollmentRepository,
 )
 
 var ServiceSet = wire.NewSet(

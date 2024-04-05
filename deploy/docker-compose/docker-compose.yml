@@ -4,16 +4,39 @@ services:
   db:
     image: mysql:8.0
     restart: always
+    container_name: demo_db
     environment:
       MYSQL_DATABASE: 'course_management'
       MYSQL_USER: 'user'
       MYSQL_PASSWORD: 'password'
       MYSQL_ROOT_PASSWORD: 'password'
+    networks:
+      - demo_course
     ports:
       - '3306:3306'
     volumes:
       - db_data:/var/lib/mysql
       - ./mysql-dump:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  demo-api:
+    image: 1.1.1.1:5000/demo-api:v1
+    container_name: demo_api
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - demo_course
+    environment:
+      - APP_CONF=./config/prod.yml
+    restart: always
 
 volumes:
   db_data:
+
+networks:
+  demo_course:
+    external: true

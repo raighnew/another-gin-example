@@ -8,40 +8,52 @@ import (
 
 type CourseService interface {
 	ListCourses(ctx context.Context) ([]*model.Course, error)
-	SignUpCourse(ctx context.Context, id int64) (*model.Course, error)
-	GetSignedUpCourse(ctx context.Context, id int64) (*model.Course, error)
-	DeleteSignedUpCourse(ctx context.Context, id int64) (*model.Course, error)
-	GetCourseClassmates(ctx context.Context, id int64) (*model.Course, error)
+	IfCourseExists(ctx context.Context, courseId string) (bool, error)
+	SignUpCourse(ctx context.Context, studentEmail string, courseId string) (*model.Enrollment, error)
+	GetSignedUpCourses(ctx context.Context, studentEmail string) ([]*model.Course, error)
+	DeleteSignedUpCourse(ctx context.Context, studentEmail string, courseId string) (bool, error)
+	GetCourseClassmates(ctx context.Context, studentEmail string, courseId string) ([]*model.Enrollment, error)
+	GetCourseEnrollment(ctx context.Context, studentEmail string, courseId string) (*model.Enrollment, error)
 }
 
-func NewCourseService(service *Service, courseRepository repository.CourseRepository) CourseService {
+func NewCourseService(service *Service, courseRepository repository.CourseRepository, enrollmentRepository repository.EnrollmentRepository) CourseService {
 	return &courseService{
-		Service:          service,
-		courseRepository: courseRepository,
+		Service:              service,
+		courseRepository:     courseRepository,
+		enrollmentRepository: enrollmentRepository,
 	}
 }
 
 type courseService struct {
+	courseRepository     repository.CourseRepository
+	enrollmentRepository repository.EnrollmentRepository
 	*Service
-	courseRepository repository.CourseRepository
 }
 
 func (s *courseService) ListCourses(ctx context.Context) ([]*model.Course, error) {
 	return s.courseRepository.List(ctx)
 }
 
-func (s *courseService) SignUpCourse(ctx context.Context, id int64) (*model.Course, error) {
-	return s.courseRepository.FirstById(ctx, id)
+func (s *courseService) IfCourseExists(ctx context.Context, courseId string) (bool, error) {
+	return s.courseRepository.Exists(ctx, courseId)
 }
 
-func (s *courseService) GetSignedUpCourse(ctx context.Context, id int64) (*model.Course, error) {
-	return s.courseRepository.FirstById(ctx, id)
+func (s *courseService) SignUpCourse(ctx context.Context, studentEmail string, courseId string) (*model.Enrollment, error) {
+	return s.enrollmentRepository.CreateEnrollment(ctx, studentEmail, courseId)
 }
 
-func (s *courseService) DeleteSignedUpCourse(ctx context.Context, id int64) (*model.Course, error) {
-	return s.courseRepository.FirstById(ctx, id)
+func (s *courseService) GetSignedUpCourses(ctx context.Context, studentEmail string) ([]*model.Course, error) {
+	return s.courseRepository.ListSignedUpCourses(ctx, studentEmail)
 }
 
-func (s *courseService) GetCourseClassmates(ctx context.Context, id int64) (*model.Course, error) {
-	return s.courseRepository.FirstById(ctx, id)
+func (s *courseService) DeleteSignedUpCourse(ctx context.Context, studentEmail string, courseId string) (bool, error) {
+	return s.enrollmentRepository.DeleteEnrollment(ctx, studentEmail, courseId)
+}
+
+func (s *courseService) GetCourseEnrollment(ctx context.Context, studentEmail string, courseId string) (*model.Enrollment, error) {
+	return s.enrollmentRepository.GetEnrollment(ctx, studentEmail, courseId)
+}
+
+func (s *courseService) GetCourseClassmates(ctx context.Context, studentEmail string, courseId string) ([]*model.Enrollment, error) {
+	return s.enrollmentRepository.GetCourseClassmates(ctx, studentEmail, courseId)
 }

@@ -1,11 +1,15 @@
 package model
 
-import "gorm.io/gorm"
+import "time"
 
 type Enrollment struct {
-	gorm.Model
+	ID        uint      `gorm:"primarykey" json:"-"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
+	StudentID string    `gorm:"index:idx_enrollment" json:"studentId"`
+	CourseID  string    `gorm:"index:idx_enrollment" json:"courseId"`
 }
 
 func (m *Enrollment) TableName() string {
-    return "enrollment"
+	return "enrollments"
 }

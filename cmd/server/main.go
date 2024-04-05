@@ -4,13 +4,17 @@ import (
 	"course-sign-up/pkg/config"
 	"course-sign-up/pkg/http"
 	"course-sign-up/pkg/log"
+	"flag"
 	"fmt"
 
 	"go.uber.org/zap"
 )
 
 func main() {
-	conf := config.NewConfig()
+	var envConf = flag.String("conf", "config/local.yml", "config path, eg: -conf ./config/local.yml")
+	flag.Parse()
+	conf := config.NewConfig(*envConf)
+
 	logger := log.NewLog(conf)
 
 	logger.Info("server start", zap.String("host", "http://127.0.0.1:"+conf.GetString("http.port")))

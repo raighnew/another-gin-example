@@ -2,6 +2,7 @@ package repository
 
 import (
 	"course-sign-up/pkg/log"
+	"fmt"
 	"time"
 
 	"github.com/spf13/viper"
@@ -24,6 +25,7 @@ func NewRepository(logger *log.Logger, db *gorm.DB) *Repository {
 }
 
 func NewDb(conf *viper.Viper) *gorm.DB {
+	fmt.Println(conf.GetString("data.mysql.user"))
 	db, err := gorm.Open(mysql.Open(conf.GetString("data.mysql.user")), &gorm.Config{})
 
 	if err != nil {

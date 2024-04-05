@@ -4,12 +4,6 @@ http:
 data:
   mysql:
     user: user:password@tcp(127.0.0.1:3306)/course_management?charset=utf8mb4&parseTime=True&loc=Local
-  redis:
-    addr: 127.0.0.1:6350
-    password: ""
-    db: 0
-    read_timeout: 0.2s
-    write_timeout: 0.2s
 
 log:
   log_level: debug

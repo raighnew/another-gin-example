@@ -10,7 +10,7 @@ import (
 
 func NewServerHTTP(
 	logger *log.Logger,
-	courseHandler handler.CourseHandler,
+	courseHandler *handler.CourseHandler,
 ) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -22,10 +22,10 @@ func NewServerHTTP(
 	})
 
 	r.GET("/courses", courseHandler.ListCourses)
-	r.POST("/student/:studentEmail/courses", courseHandler.SignUpCourse)
-	r.GET("/student/:studentEmail/courses", courseHandler.GetSignedUpCourse)
-	r.DELETE("/student/:studentEmail/courses/:courseId", courseHandler.DeleteSignedUpCourse)
-	r.GET("/student/:studentEmail/courses/:courseId/classmates", courseHandler.GetCourseClassmates)
+	r.POST("/students/:studentEmail/courses", courseHandler.SignUpCourse)
+	r.GET("/students/:studentEmail/courses", courseHandler.GetSignedUpCourses)
+	r.DELETE("/students/:studentEmail/courses/:courseId", courseHandler.DeleteSignedUpCourse)
+	r.GET("/students/:studentEmail/courses/:courseId/classmates", courseHandler.GetCourseClassmates)
 
 	return r
 }

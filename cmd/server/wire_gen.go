@@ -25,7 +25,8 @@ func newApp(viperViper *viper.Viper, logger *log.Logger) (*gin.Engine, func(), e
 	db := repository.NewDb(viperViper)
 	repositoryRepository := repository.NewRepository(logger, db)
 	courseRepository := repository.NewCourseRepository(repositoryRepository)
-	courseService := service.NewCourseService(serviceService, courseRepository)
+	enrollmentRepository := repository.NewEnrollmentRepository(repositoryRepository)
+	courseService := service.NewCourseService(serviceService, courseRepository, enrollmentRepository)
 	courseHandler := handler.NewCourseHandler(handlerHandler, courseService)
 	engine := server.NewServerHTTP(logger, courseHandler)
 	return engine, func() {
@@ -36,7 +37,7 @@ func newApp(viperViper *viper.Viper, logger *log.Logger) (*gin.Engine, func(), e
 
 var ServerSet = wire.NewSet(server.NewServerHTTP)
 
-var RepositorySet = wire.NewSet(repository.NewDb, repository.NewRepository, repository.NewCourseRepository)
+var RepositorySet = wire.NewSet(repository.NewDb, repository.NewRepository, repository.NewCourseRepository, repository.NewEnrollmentRepository)
 
 var ServiceSet = wire.NewSet(service.NewService, service.NewCourseService)
 
